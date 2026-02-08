@@ -86,9 +86,20 @@ cd /Users/davidberkowitz/Documents/SlackDMs
 4. In Netlify, create a new site from that GitHub repo.
 5. Build settings:
 - Build command: `npm run build`
-- Publish directory: `.next`
+- Publish directory: leave blank (Netlify + Next plugin handles this)
 
-6. Add environment variables in Netlify (same as `.env.local`).
+6. Add environment variables in Netlify:
+- `NEXT_PUBLIC_BASE_URL` = your live Netlify URL (example: `https://your-site.netlify.app`)
+- `SLACK_CLIENT_ID`
+- `SLACK_CLIENT_SECRET`
+- `SLACK_SIGNING_SECRET`
+- `SLACK_REDIRECT_URI` = `https://your-site.netlify.app/api/slack/callback`
+- `SLACK_BOT_SCOPES`
+- `SLACK_USER_SCOPES`
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `CRON_SECRET`
+
 7. Update Slack app URLs to production:
 - OAuth redirect URL: `https://YOUR_DOMAIN/api/slack/callback`
 - Event request URL: `https://YOUR_DOMAIN/api/slack/events`

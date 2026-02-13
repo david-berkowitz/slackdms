@@ -37,16 +37,22 @@ export async function GET(request: Request) {
     );
   }
 
-  const oauthResponse = await slackApi<OAuthResponse>({
-    token: "",
-    method: "oauth.v2.access",
-    body: {
-      client_id: clientId,
-      client_secret: clientSecret,
-      code,
-      redirect_uri: redirectUri,
-    },
+  const oauthBody = new URLSearchParams({
+    client_id: clientId,
+    client_secret: clientSecret,
+    code,
+    redirect_uri: redirectUri,
   });
+
+  const oauthRes = await fetch("https://slack.com/api/oauth.v2.access", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: oauthBody.toString(),
+  });
+
+  const oauthResponse = (await oauthRes.json()) as OAuthResponse;
 
   if (!oauthResponse.ok || !oauthResponse.team?.id) {
     return NextResponse.json(

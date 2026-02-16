@@ -35,12 +35,25 @@ export async function POST(request: Request) {
     );
   }
 
-  const { data: workflow } = await supabaseAdmin
+  let { data: workflow } = await supabaseAdmin
     .from("dm_workflows")
     .select("id,team_id,trigger,sender_user_id,message_template,is_active")
     .eq("id", payload.workflow_id)
     .eq("team_id", payload.team_id)
     .single();
+
+  if (!workflow) {
+    const { data: legacyWorkflow } = await supabaseAdmin
+      .from("dm_workflows")
+      .select("id,team_id,trigger,message_template,is_active")
+      .eq("id", payload.workflow_id)
+      .eq("team_id", payload.team_id)
+      .single();
+
+    workflow = legacyWorkflow
+      ? { ...legacyWorkflow, sender_user_id: null }
+      : null;
+  }
 
   if (!workflow) {
     return NextResponse.json({ error: "Workflow not found." }, { status: 404 });

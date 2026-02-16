@@ -18,20 +18,35 @@ export async function GET(request: Request) {
   const since = new Date(Date.now() - lookback * 24 * 60 * 60 * 1000)
     .toISOString();
 
-  const table = channelId ? "user_channel_activity" : "user_activity";
-  let query = supabaseAdmin
-    .from(table)
-    .select("user_id,last_activity_at,channel_id")
-    .eq("team_id", teamId)
-    .gte("last_activity_at", since)
-    .order("last_activity_at", { ascending: false })
-    .limit(250);
+  let activity: Array<{
+    user_id: string;
+    last_activity_at: string | null;
+    channel_id?: string | null;
+  }> = [];
+  let error: { message?: string } | null = null;
 
   if (channelId) {
-    query = query.eq("channel_id", channelId);
+    const result = await supabaseAdmin
+      .from("user_channel_activity")
+      .select("user_id,last_activity_at,channel_id")
+      .eq("team_id", teamId)
+      .eq("channel_id", channelId)
+      .gte("last_activity_at", since)
+      .order("last_activity_at", { ascending: false })
+      .limit(250);
+    activity = result.data ?? [];
+    error = result.error;
+  } else {
+    const result = await supabaseAdmin
+      .from("user_activity")
+      .select("user_id,last_activity_at")
+      .eq("team_id", teamId)
+      .gte("last_activity_at", since)
+      .order("last_activity_at", { ascending: false })
+      .limit(250);
+    activity = result.data ?? [];
+    error = result.error;
   }
-
-  const { data: activity, error } = await query;
 
   if (error) {
     return NextResponse.json(

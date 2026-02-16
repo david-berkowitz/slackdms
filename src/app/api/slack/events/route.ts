@@ -27,6 +27,14 @@ type Workflow = {
   message_template: string;
 };
 
+function isLegacyWorkflowColumnError(message?: string) {
+  if (!message) return false;
+  return (
+    message.includes("dm_workflows.channel_id") ||
+    message.includes("dm_workflows.sender_user_id")
+  );
+}
+
 function resolveUserId(user: string | { id?: string } | undefined) {
   if (!user) {
     return null;
@@ -118,12 +126,28 @@ async function triggerWorkflows({
   userId: string;
   channelId?: string | null;
 }) {
-  const { data: workflows } = await supabaseAdmin
+  const { data: initialWorkflows, error } = await supabaseAdmin
     .from("dm_workflows")
     .select("id,trigger,channel_id,sender_user_id,message_template")
     .eq("team_id", teamId)
     .eq("trigger", trigger)
     .eq("is_active", true);
+  let workflows = initialWorkflows;
+
+  if (error && isLegacyWorkflowColumnError(error.message)) {
+    const { data: legacyWorkflows } = await supabaseAdmin
+      .from("dm_workflows")
+      .select("id,trigger,message_template")
+      .eq("team_id", teamId)
+      .eq("trigger", trigger)
+      .eq("is_active", true);
+
+    workflows = (legacyWorkflows ?? []).map((workflow) => ({
+      ...workflow,
+      channel_id: null,
+      sender_user_id: null,
+    }));
+  }
 
   if (!workflows?.length) {
     return;

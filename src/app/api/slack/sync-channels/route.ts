@@ -14,6 +14,9 @@ type ConversationsListResponse = {
   error?: string;
 };
 
+const shouldAutoJoinChannels =
+  process.env.SLACK_AUTO_JOIN_CHANNELS?.toLowerCase() === "true";
+
 export async function POST(request: Request) {
   const { team_id } = (await request.json()) as { team_id?: string };
   if (!team_id) {
@@ -57,15 +60,17 @@ export async function POST(request: Request) {
     { onConflict: "team_id,channel_id" }
   );
 
-  await Promise.all(
-    list.channels.map((channel) =>
-      slackApi({
-        token: workspace.bot_access_token,
-        method: "conversations.join",
-        body: { channel: channel.id },
-      }).catch(() => null)
-    )
-  );
+  if (shouldAutoJoinChannels) {
+    await Promise.all(
+      list.channels.map((channel) =>
+        slackApi({
+          token: workspace.bot_access_token,
+          method: "conversations.join",
+          body: { channel: channel.id },
+        }).catch(() => null)
+      )
+    );
+  }
 
   return NextResponse.json({ ok: true, count: list.channels.length });
 }

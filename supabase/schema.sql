@@ -111,3 +111,26 @@ create table if not exists workflow_sends (
 );
 
 create index if not exists idx_workflow_sends_team_user on workflow_sends (team_id, user_id);
+
+-- Security hardening: these tables are API-exposed, so keep public roles blocked.
+alter table public.workspaces enable row level security;
+alter table public.users enable row level security;
+alter table public.channels enable row level security;
+alter table public.user_activity enable row level security;
+alter table public.user_channel_activity enable row level security;
+alter table public.dm_jobs enable row level security;
+alter table public.dm_job_recipients enable row level security;
+alter table public.workspace_senders enable row level security;
+alter table public.dm_workflows enable row level security;
+alter table public.workflow_sends enable row level security;
+
+revoke all on table public.workspaces from anon, authenticated;
+revoke all on table public.users from anon, authenticated;
+revoke all on table public.channels from anon, authenticated;
+revoke all on table public.user_activity from anon, authenticated;
+revoke all on table public.user_channel_activity from anon, authenticated;
+revoke all on table public.dm_jobs from anon, authenticated;
+revoke all on table public.dm_job_recipients from anon, authenticated;
+revoke all on table public.workspace_senders from anon, authenticated;
+revoke all on table public.dm_workflows from anon, authenticated;
+revoke all on table public.workflow_sends from anon, authenticated;
